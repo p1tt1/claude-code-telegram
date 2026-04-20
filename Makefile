@@ -1,5 +1,10 @@
 .PHONY: install dev test lint format clean help run run-watch run-remote remote-attach remote-stop \
-       bump-patch bump-minor bump-major release version
+       bump-patch bump-minor bump-major release version \
+       service-install service-uninstall service-start service-stop service-restart service-status service-logs
+
+LAUNCHD_LABEL = com.p1tt1.claude-telegram-bot
+LAUNCHD_PLIST = $(HOME)/Library/LaunchAgents/$(LAUNCHD_LABEL).plist
+PROJECT_DIR   = $(shell pwd)
 
 # Default target
 help:
@@ -20,6 +25,13 @@ help:
 	@echo "  run-remote    - Start bot in tmux on remote Mac (unlocks keychain)"
 	@echo "  remote-attach - Attach to running bot tmux session"
 	@echo "  remote-stop   - Stop the bot tmux session"
+	@echo "  service-install   - Install launchd service (start on login + auto-restart)"
+	@echo "  service-uninstall - Remove launchd service"
+	@echo "  service-start     - Start the service"
+	@echo "  service-stop      - Stop the service"
+	@echo "  service-restart   - Restart the service"
+	@echo "  service-status    - Show service status"
+	@echo "  service-logs      - Tail live logs"
 
 install:
 	poetry install --no-dev
@@ -70,6 +82,40 @@ remote-attach:  ## Attach to running bot tmux session
 
 remote-stop:  ## Stop the bot tmux session
 	tmux kill-session -t claude-bot
+
+# --- launchd Service (macOS) ---
+
+service-install:  ## Install and load the launchd service (starts on login)
+	@sed \
+		-e 's|{{PROJECT_DIR}}|$(PROJECT_DIR)|g' \
+		-e 's|{{HOME}}|$(HOME)|g' \
+		config/launchd.plist.template > $(LAUNCHD_PLIST)
+	launchctl load $(LAUNCHD_PLIST)
+	@echo "Service installed and started."
+	@echo "  Logs:   make service-logs"
+	@echo "  Status: make service-status"
+
+service-uninstall:  ## Unload and remove the launchd service
+	-launchctl unload $(LAUNCHD_PLIST)
+	-rm -f $(LAUNCHD_PLIST)
+	@echo "Service removed."
+
+service-start:  ## Start the launchd service
+	launchctl start $(LAUNCHD_LABEL)
+
+service-stop:  ## Stop the launchd service (won't auto-restart)
+	launchctl stop $(LAUNCHD_LABEL)
+
+service-restart:  ## Restart the launchd service
+	launchctl stop $(LAUNCHD_LABEL)
+	sleep 2
+	launchctl start $(LAUNCHD_LABEL)
+
+service-status:  ## Show launchd service status
+	launchctl list | grep $(LAUNCHD_LABEL) || echo "Service not loaded"
+
+service-logs:  ## Tail bot logs (stdout + stderr interleaved)
+	tail -f $(HOME)/Library/Logs/claude-telegram-bot.log $(HOME)/Library/Logs/claude-telegram-bot.error.log
 
 # --- Version Management ---
 
