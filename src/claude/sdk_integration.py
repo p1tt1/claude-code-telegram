@@ -28,7 +28,7 @@ from claude_agent_sdk import (
 )
 from claude_agent_sdk._errors import MessageParseError
 from claude_agent_sdk._internal.message_parser import parse_message
-from claude_agent_sdk.types import StreamEvent
+from claude_agent_sdk.types import StreamEvent, SystemPromptPreset
 
 from ..config.settings import Settings
 from ..security.validators import SecurityValidator
@@ -296,18 +296,26 @@ class ClaudeSDKManager:
                 stderr_lines.append(line)
                 logger.debug("Claude CLI stderr", line=line)
 
-            # Build system prompt, loading CLAUDE.md from working directory if present
-            base_prompt = (
+            # Build system prompt append, loading CLAUDE.md from working directory if present.
+            # Use append mode (not replace) so Claude Code's default system prompt is
+            # preserved — it includes project skill/command discovery. Replacing it with
+            # --system-prompt would wipe out the skills registry for the session.
+            append_prompt = (
                 f"All file operations must stay within {working_directory}. "
                 "Use relative paths."
             )
             claude_md_path = Path(working_directory) / "CLAUDE.md"
             if claude_md_path.exists():
-                base_prompt += "\n\n" + claude_md_path.read_text(encoding="utf-8")
+                append_prompt += "\n\n" + claude_md_path.read_text(encoding="utf-8")
                 logger.info(
                     "Loaded CLAUDE.md into system prompt",
                     path=str(claude_md_path),
                 )
+            base_prompt: SystemPromptPreset = {
+                "type": "preset",
+                "preset": "claude_code",
+                "append": append_prompt,
+            }
 
             # When DISABLE_TOOL_VALIDATION=true, pass None for allowed/disallowed
             # tools so the SDK does not restrict tool usage (e.g. MCP tools).
