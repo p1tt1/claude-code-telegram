@@ -147,3 +147,7 @@ sessions/
 backups/
 uploads/
 config/mcp.json
+
+# Personal/local notes
+claudedocs/
+docs/superpowers/
