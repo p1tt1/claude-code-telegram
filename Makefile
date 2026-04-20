@@ -112,7 +112,17 @@ service-restart:  ## Restart the launchd service
 	launchctl start $(LAUNCHD_LABEL)
 
 service-status:  ## Show launchd service status
-	launchctl list | grep $(LAUNCHD_LABEL) || echo "Service not loaded"
+	@OUTPUT=$$(launchctl list | grep $(LAUNCHD_LABEL)); \
+	if [ -z "$$OUTPUT" ]; then \
+		echo "Status: not loaded"; \
+	else \
+		PID=$$(echo "$$OUTPUT" | awk '{print $$1}'); \
+		if [ "$$PID" = "-" ]; then \
+			echo "Status: stopped (service loaded, bot not running)"; \
+		else \
+			echo "Status: running (PID $$PID)"; \
+		fi \
+	fi
 
 service-logs:  ## Tail bot logs (stdout + stderr interleaved)
 	tail -f $(HOME)/Library/Logs/claude-telegram-bot.log $(HOME)/Library/Logs/claude-telegram-bot.error.log
