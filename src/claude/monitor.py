@@ -5,7 +5,13 @@ from pathlib import Path
 from typing import Optional, Set, Tuple
 
 # Subdirectories under ~/.claude/ that Claude Code uses internally.
-_CLAUDE_INTERNAL_SUBDIRS: Set[str] = {"plans", "todos", "settings.json"}
+_CLAUDE_INTERNAL_SUBDIRS: Set[str] = {
+    "plans",
+    "todos",
+    "settings.json",
+    "plugins",  # skill files from ~/.claude/plugins/cache/
+    "skills",  # user-level skill files from ~/.claude/skills/
+}
 
 # Commands that modify the filesystem or change context and should have paths checked
 _FS_MODIFYING_COMMANDS: Set[str] = {
