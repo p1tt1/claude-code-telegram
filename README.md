@@ -327,6 +327,25 @@ This bot implements defense-in-depth security:
 
 See [SECURITY.md](SECURITY.md) for details.
 
+## Running as a Service
+
+To have the bot start automatically on login and restart on crash:
+
+**macOS (launchd):**
+```bash
+make service-install   # install + start
+make service-status    # check if running (PID shown = running)
+make service-logs      # tail live logs
+make service-stop      # stop temporarily
+make service-uninstall # remove auto-start entirely
+```
+
+**Linux (systemd):** See [SYSTEMD_SETUP.md](SYSTEMD_SETUP.md).
+
+Logs are written to `~/Library/Logs/claude-telegram-bot.log` (stdout) and `claude-telegram-bot.error.log` (stderr).
+
+> **Full details:** See [LAUNCHD_SETUP.md](LAUNCHD_SETUP.md) for macOS setup, log locations, and update workflow.
+
 ## Development
 
 ```bash
